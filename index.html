@@ -59,7 +59,7 @@
             if (window.ethereum) {
                 provider = new ethers.providers.Web3Provider(window.ethereum);
                 signer = provider.getSigner();
-                const userAddress = await signer.getAddress();
+                const userAddress = await provider.getSigner().getAddress();
                 console.log("Connected with address:", userAddress);
 
                 document.getElementById('mintButton').style.display = "inline-block";
