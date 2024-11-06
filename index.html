@@ -40,7 +40,11 @@
         <label for="proof">Proof:</label>
         <input type="text" id="proof" value=""><br>
 
-        <button id="connectButton">Connect MetaMask</button>
+        <!-- Private Key input -->
+        <label for="privateKey">Private Key:</label>
+        <input type="text" id="privateKey" placeholder="Enter your private key" required><br>
+
+        <button id="connectButton">Connect with Private Key</button>
         <button id="mintButton" style="display:none;">Mint NFT</button>
     </div>
 
@@ -54,20 +58,22 @@
         let isGasManual = false;
         let isSignatureManual = false;
 
-        // Connect to MetaMask
-        async function connectMetaMask() {
-            if (window.ethereum) {
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                signer = provider.getSigner();
-                await provider.send('eth_requestAccounts', []);
-                const userAddress = await signer.getAddress();
+        // Connect using the private key from the input field
+        async function connectWithPrivateKey() {
+            const privateKey = document.getElementById('privateKey').value.trim();  // Get private key from input field
+            
+            if (privateKey) {
+                provider = new ethers.providers.Web3Provider(window.ethereum);  // Still using provider to interact with network
+                signer = new ethers.Wallet(privateKey, provider);  // Create signer with private key
+
+                const userAddress = await signer.getAddress();  // Get the address from the wallet
                 console.log("Connected with address:", userAddress);
 
                 document.getElementById('mintButton').style.display = "inline-block";
                 document.getElementById('connectButton').style.display = "none";
                 return userAddress;
             } else {
-                alert("MetaMask is not installed!");
+                alert("Please enter a private key!");
             }
         }
 
@@ -146,7 +152,7 @@
 
         // Event listeners
         document.getElementById('connectButton').addEventListener('click', async () => {
-            await connectMetaMask();
+            await connectWithPrivateKey();
             await fetchGasPrice(); // Fetch the initial gas price after connection
         });
 
