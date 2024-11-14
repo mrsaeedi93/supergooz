@@ -413,7 +413,7 @@
 
                 if (err.message != null) {
                     document.getElementById("status").style.color = "red";
-                    document.getElementById("status").innerText = err.message;
+                    document.getElementById("status").innerText = err.message[0];
                 }
 
                 else {
