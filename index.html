@@ -156,7 +156,7 @@
         <div>
             <label for="progressBar">Mint Progress</label>
             <progress id="progressBar" value="0" max="100"></progress>
-            <span id="progressText">0 / 2222 minted</span> <!-- Update this text dynamically -->
+            <span id="progressText">Updating, Please Wait...</span> <!-- Update this text dynamically -->
         </div>
 
         <label for="mintAmount">Choose amount to mint</label>
@@ -173,7 +173,8 @@
         const contractAddress = "0xb741C2f06FA5b7aD042Eae5c78B3A3f13A40a8fA"; // contract address
         let contractABI;
 
-
+        let provider, signer, address, network;
+        
         async function checkConnection() {
             if (window.ethereum) {
                 try {
@@ -188,20 +189,79 @@
                 return false;
         }
 
+
+            // Load ABI
+            window.onload = async () => {
+                try {
+                    if (!window.ethereum) {
+
+                        document.getElementById("status").style.color = "red";
+                        document.getElementById("status").innerText = "Could not detect Ethereum wallet, Please install a wallet to continue";
+                    }
+                } catch (err) {
+                    console.log("Failed to check Ethereum wallet");
+                }
+
+
+                if (window.ethereum) {
+                    if (checkConnection()) {
+                        provider = new ethers.providers.Web3Provider(window.ethereum);
+                        await provider.send("eth_requestAccounts", []);
+                        signer = provider.getSigner();
+                        address = await signer.getAddress();
+                        network = await provider.getNetwork();
+
+                        document.getElementById("walletAddress").style.display = "inline";
+                        document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+                        document.getElementById("connectButton").style.display = "none";
+                        document.getElementById("switchNetworkButton").style.display = network.chainId !== 84532 ? "inline" : "none";
+
+                    }
+                    else console.log("checkConnection returned FALSE");
+                }
+                else console.log("window.ethereum returned FALSE");
+
+
+                try {
+                    contractABI = await loadABI();
+
+                } catch (error) {
+
+                    document.getElementById("status").style.color = "red";
+                    document.getElementById("status").innerText = "Failed to load ABI";
+                }
+
+                try {
+                    if (checkConnection())
+                        document.getElementById("ownedLabel").innerText = "Owned NFTs: " + await getNFTBalance();
+                } catch (err) {
+                    document.getElementById("ownedLabel").innerText = "Error fetching owned mints";
+                }
+
+                try {
+                    if (checkConnection())
+                        document.getElementById("mintsLeftLabel").innerText = "Mints Left: " + await getMintsLeft();
+                } catch (err) {
+                    document.getElementById("mintsLeftLabel").innerText = "Error fetching available mints";
+                }
+            };
+
+
+
         async function getNFTBalance() {
-            const signer = await connectToMetaMask();
+            signer = await connectToMetaMask();
             if (!signer) {
                 console.log("func getNFTBalance returned FALSE signer");
                 return;
             }
             const contract = new ethers.Contract(contractAddress, contractABI, signer);
-            const address = await signer.getAddress();
+            address = await signer.getAddress();
             const balance = await contract.balanceOf(address);
             return balance;
         }
 
         async function getMintsLeft() {
-            const signer = await connectToMetaMask();
+            signer = await connectToMetaMask();
             if (!signer) {
                 console.log("func getMintsLeft returned FALSE signer");
                 return;
@@ -224,11 +284,11 @@
                     return;
                 }
 
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                // const provider = new ethers.providers.Web3Provider(window.ethereum);
                 await provider.send("eth_requestAccounts", []);
-                const signer = provider.getSigner();
-                const address = await signer.getAddress();
-                const network = await provider.getNetwork();
+                signer = provider.getSigner();
+                address = await signer.getAddress();
+                network = await provider.getNetwork();
 
                 document.getElementById("walletAddress").style.display = "inline";
                 document.getElementById("walletAddress").innerText = `Connected: ${address}`;
@@ -281,7 +341,7 @@
         });
 
         async function mintNFT() {
-            const signer = await connectToMetaMask();
+            signer = await connectToMetaMask();
             if (!signer) return;
 
             const mintAmount = parseInt(document.getElementById("mintAmount").value);
@@ -335,82 +395,29 @@
 
 
         async function updateProgressBar() {
-            try {
-                const provider = new ethers.providers.JsonRpcProvider("https://base-sepolia-rpc.publicnode.com"); // Read-only provider
-                const contract = new ethers.Contract(contractAddress, contractABI, provider); // Read-only contract instance
 
-                const totalSupply = await contract.totalSupply(); // Number of minted tokens
-                const collectionSize = await contract.collectionSize(); // Max supply
+            if (window.ethereum) {
+                try {
+                    // const provider = new ethers.providers.JsonRpcProvider("https://base-sepolia-rpc.publicnode.com"); // Read-only provider
+                    const contract = new ethers.Contract(contractAddress, contractABI, provider); // Read-only contract instance
 
-                // Update the progress bar with the actual minted tokens out of max supply
-                const progressBar = document.getElementById("progressBar");
-                const progressText = document.getElementById("progressText");
+                    const totalSupply = await contract.totalSupply(); // Number of minted tokens
+                    const collectionSize = await contract.collectionSize(); // Max supply
 
-                progressBar.value = totalSupply;
-                progressBar.max = collectionSize;
-                progressText.innerText = `${totalSupply} / ${collectionSize} minted`;
+                    // Update the progress bar with the actual minted tokens out of max supply
+                    const progressBar = document.getElementById("progressBar");
+                    const progressText = document.getElementById("progressText");
 
-            } catch (error) {
-                console.error("Error fetching data for progress bar:", error);
+                    progressBar.value = totalSupply;
+                    progressBar.max = collectionSize;
+                    progressText.innerText = `${totalSupply} / ${collectionSize} minted`;
+
+                } catch (error) {
+                    console.error("Error fetching data for progress bar:", error);
+                }
             }
         }
 
-        // Load ABI
-        window.onload = async () => {
-            try {
-                if (!window.ethereum) {
-
-                    document.getElementById("status").style.color = "red";
-                    document.getElementById("status").innerText = "Could not detect Ethereum wallet, Please install a wallet to continue";
-                }
-            } catch (err) {
-                console.log("Failed to check Ethereum wallet");
-            }
-
-
-            if (window.ethereum) {
-                if (checkConnection()) {
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);
-                    const signer = provider.getSigner();
-                    const address = await signer.getAddress();
-                    const network = await provider.getNetwork();
-
-                    document.getElementById("walletAddress").style.display = "inline";
-                    document.getElementById("walletAddress").innerText = `Connected: ${address}`;
-                    document.getElementById("connectButton").style.display = "none";
-                    document.getElementById("switchNetworkButton").style.display = network.chainId !== 84532 ? "inline" : "none";
-                    updateProgressBar();
-
-                }
-                else console.log("checkConnection returned FALSE");
-            }
-            else console.log("window.ethereum returned FALSE");
-
-
-            try {
-                contractABI = await loadABI();
-
-            } catch (error) {
-
-                document.getElementById("status").style.color = "red";
-                document.getElementById("status").innerText = "Failed to load ABI";
-            }
-
-            try {
-                if (checkConnection())
-                    document.getElementById("ownedLabel").innerText = "Owned NFTs: " + await getNFTBalance();
-            } catch (err) {
-                document.getElementById("ownedLabel").innerText = "Error fetching owned mints";
-            }
-
-            try {
-                if (checkConnection())
-                    document.getElementById("mintsLeftLabel").innerText = "Mints Left: " + await getMintsLeft();
-            } catch (err) {
-                document.getElementById("mintsLeftLabel").innerText = "Error fetching available mints";
-            }
-        };
 
 
 
