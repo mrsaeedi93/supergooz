@@ -136,7 +136,6 @@
                 transform: rotate(360deg);
             }
         }
-
     </style>
 
     <script src="ethers.umd.js" type="application/javascript"></script>
@@ -283,9 +282,16 @@
             const contract = new ethers.Contract(contractAddress, contractABI, signer);
             const totalPrice = await contract.mintPrice(mintAmount);
 
+            try {
             const tx = await contract.mint(mintAmount, { value: totalPrice });
             document.getElementById("mintButton").disabled = true;
             document.getElementById("status").innerText = "Minting in progress...";
+            } catch (err) {
+                document.getElementById("status").style.color = 'red';
+                document.getElementById("status").innerText = err;
+                document.getElementById("status").style.color = 'yellow';
+
+            }
 
             const receipt = await tx.wait();
             document.getElementById("status").innerText = `Successfully minted ${mintAmount} NFTs! TxHash: ${receipt.transactionHash}`;
