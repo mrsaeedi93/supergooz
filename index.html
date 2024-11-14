@@ -391,32 +391,32 @@
         };
 
 
-    async function updateProgressBar() {
-        try {
-            const provider = new ethers.providers.JsonRpcProvider(rpcUrl); // Read-only provider
-            const contract = new ethers.Contract(contractAddress, contractABI, provider); // Read-only contract instance
+        async function updateProgressBar() {
+            try {
+                const provider = new ethers.providers.JsonRpcProvider("https://base-sepolia-rpc.publicnode.com"); // Read-only provider
+                const contract = new ethers.Contract(contractAddress, contractABI, provider); // Read-only contract instance
 
-            const totalSupply = await contract.totalSupply(); // Number of minted tokens
-            const collectionSize = await contract.collectionSize(); // Max supply
+                const totalSupply = await contract.totalSupply(); // Number of minted tokens
+                const collectionSize = await contract.collectionSize(); // Max supply
 
-            // Update the progress bar with the actual minted tokens out of max supply
-            const progressBar = document.getElementById("progressBar");
-            const progressText = document.getElementById("progressText");
+                // Update the progress bar with the actual minted tokens out of max supply
+                const progressBar = document.getElementById("progressBar");
+                const progressText = document.getElementById("progressText");
 
-            progressBar.value = totalSupply;
-            progressBar.max = collectionSize;
-            progressText.innerText = `${totalSupply} / ${collectionSize} minted`;
+                progressBar.value = totalSupply;
+                progressBar.max = collectionSize;
+                progressText.innerText = `${totalSupply} / ${collectionSize} minted`;
 
-        } catch (error) {
-            console.error("Error fetching data for progress bar:", error);
+            } catch (error) {
+                console.error("Error fetching data for progress bar:", error);
+            }
         }
-    }
 
-    // Update progress every 10 seconds
-    setInterval(updateProgressBar, 10000);
+        // Update progress every 10 seconds
+        setInterval(updateProgressBar, 10000);
 
-    // Initial progress update on page load
-    updateProgressBar();
+        // Initial progress update on page load
+        updateProgressBar();
 
 
     </script>
