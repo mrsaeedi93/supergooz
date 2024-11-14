@@ -308,7 +308,6 @@
             return mintsLeft;
         }
 
-
         async function loadABI() {
             const response = await fetch('ABI.json');
             return await response.json();
@@ -394,8 +393,10 @@
             const contract = new ethers.Contract(contractAddress, contractABI, signer);
             const totalPrice = await contract.mintPrice(mintAmount);
 
+            let tx;
+
             try {
-                const tx = await contract.mint(mintAmount, { value: totalPrice });
+                tx = await contract.mint(mintAmount, { value: totalPrice });
                 document.getElementById("mintButton").disabled = true;
                 document.getElementById("status").style.color = "yellow";
                 document.getElementById("status").innerText = "Minting in progress...";
@@ -420,9 +421,15 @@
 
             }
 
-            const receipt = await tx.wait();
+            let txHash = 'INVALID';
+
+            if (!tx) {
+                const receipt = await tx.wait();
+                txHash = receipt.transactionHash;
+            }
+
             document.getElementById("status").style.color = "yellow";
-            document.getElementById("status").innerText = `Successfully minted ${mintAmount} NFTs! TxHash: ${receipt.transactionHash}`;
+            document.getElementById("status").innerText = `Successfully minted ${mintAmount} NFTs! TxHash: ${txHash}`;
             document.getElementById("mintButton").disabled = false;
             document.getElementById("ownedLabel").innerText = "Owned NFTs: " + await getNFTBalance();
             document.getElementById("mintsLeftLabel").innerText = "Mints Left: " + await getMintsLeft();
