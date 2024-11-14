@@ -153,6 +153,12 @@
         <h1>Ape Fools</h1>
         <h2>Mint your NFT on the Base Sepolia Testnet</h2>
         <p>First NFT mint for each wallet is <b><i>Free!</i></b></p>
+        <div>
+            <label for="progressBar">Mint Progress</label>
+            <progress id="progressBar" value="0" max="100"></progress>
+            <span id="progressText">0 / 2222 minted</span> <!-- Update this text dynamically -->
+        </div>
+
         <label for="mintAmount">Choose amount to mint</label>
         <input type="number" id="mintAmount" min="1" max="5" value="1">
         <button id="mintButton">Mint NFT</button>
@@ -383,6 +389,34 @@
                 document.getElementById("mintsLeftLabel").innerText = "Error fetching available mints";
             }
         };
+
+
+        async function updateProgressBar() {
+                try {
+                    // Fetch current totalSupply and collectionSize from the contract
+                    const totalSupply = await contract.totalSupply(); // Number of minted tokens
+                    const collectionSize = await contract.collectionSize(); // Max supply
+
+                    // Update the progress bar with the actual minted tokens out of max supply
+                    const progressBar = document.getElementById("progressBar");
+                    const progressText = document.getElementById("progressText");
+
+                    progressBar.value = totalSupply;
+                    progressBar.max = collectionSize;
+
+                    progressText.innerText = `${totalSupply} / ${collectionSize} minted`;
+
+                } catch (error) {
+                    console.error("Error fetching data for progress bar:", error);
+                }
+            }
+
+            // Update progress every 10 seconds
+            setInterval(updateProgressBar, 10000);
+
+            // Initial progress update on page load
+            updateProgressBar();
+
     </script>
 </body>
 
