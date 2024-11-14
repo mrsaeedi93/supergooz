@@ -7,14 +7,12 @@
     <title>Ape Fools NFT Mint</title>
     <style>
         /* Basic styling for gradients, responsive design, and buttons */
-
         button:disabled {
             border: 1px solid #999999 !important;
             background-color: #cccccc !important;
             color: #666666 !important;
             cursor: not-allowed !important;
         }
-
 
         body {
             margin: 0;
@@ -30,18 +28,39 @@
             text-align: center;
         }
 
-        /* Additional styling for the image inside #contents */
-        #contents img {
-            max-width: 80%;
-            /* Sets the image width to a maximum of 80% of the div width */
-            height: auto;
-            /* Maintains the image's aspect ratio */
-            display: block;
-            margin: 0 auto 1em;
-            /* Centers the image and adds some space below it */
+        /* Styling for the two-pane layout */
+        .container {
+            display: flex;
+            width: 90%;
+            max-width: 1000px;
         }
 
+        .leftPane,
+        .rightPane {
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+        }
 
+        .leftPane {
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .rightPane {
+            flex: 1;
+            max-width: 500px;
+        }
+
+        /* Image inside rightPane */
+        #contents img {
+            max-width: 80%;
+            height: auto;
+            display: block;
+            margin: 0 auto 1em;
+        }
+
+        /* Additional styles */
         h1,
         h2,
         p {
@@ -57,20 +76,10 @@
         #connectButton,
         #switchNetworkButton,
         #mintButton,
-
         #connectButton:hover,
         #switchNetworkButton:hover,
         #mintButton:hover {
             background-color: #feb47b;
-        }
-
-
-        #contents {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
         }
 
         input[type="number"] {
@@ -136,9 +145,6 @@
             margin-left: 10px;
         }
 
-
-
-
         @keyframes spin {
             0% {
                 transform: rotate(0deg);
@@ -149,37 +155,46 @@
             }
         }
     </style>
-
-    <script src="ethers.umd.js" type="application/javascript"></script>
 </head>
 
 <body>
-
     <div id="header">
         <button id="connectButton">Connect Wallet</button>
         <span id="walletAddress" style="display: none;"></span>
         <button id="switchNetworkButton" style="display: none;">Switch to Base Sepolia</button>
     </div>
 
-    <div id="contents">
-        <h1>Ape Fools</h1>
-        <img src="logo.png" alt="Logo">
-        <h2>Mint your NFT on the Base Sepolia Testnet</h2>
-        <div>
-            <label for="progressBar">Mint Progress</label>
-            <progress id="progressBar" value="0" max="100"></progress>
-            <span id="progressText">Updating, Please Wait...</span> <!-- Update this text dynamically -->
+    <!-- Container div for the two panes -->
+    <div class="container">
+        <!-- Left Pane for additional content -->
+        <div class="leftPane">
+            <h2>About Ape Fools</h2>
+            <p>Ape Fools is a unique NFT collection available on the Base Sepolia Testnet. Here, you can mint your own
+                Ape Fool NFTs and join an exclusive community.</p>
+            <p>This collection features limited mints and offers users an exciting opportunity to be part of something
+                unique.</p>
+            <p>Learn more about the benefits of ownership, the rarity of each NFT, and how to participate in the
+                community.</p>
         </div>
 
-        <label for="mintAmount">Choose amount to mint</label>
-        <input type="number" id="mintAmount" min="1" max="5" value="1">
-        <button id="mintButton">Mint NFT</button>
-        <div id="ownedLabel"></div>
-        <div id="mintsLeftLabel"></div> <!-- New label for available mints -->
-        <div id="status"></div>
+        <!-- Right Pane for the existing contents -->
+        <div class="rightPane" id="contents">
+            <h1>Ape Fools</h1>
+            <img src="logo.png" alt="Logo">
+            <h2>Mint your NFT on the Base Sepolia Testnet</h2>
+            <div>
+                <label for="progressBar">Mint Progress</label>
+                <progress id="progressBar" value="0" max="100"></progress>
+                <span id="progressText">Updating, Please Wait...</span> <!-- Update this text dynamically -->
+            </div>
+            <label for="mintAmount">Choose amount to mint</label>
+            <input type="number" id="mintAmount" min="1" max="5" value="1">
+            <button id="mintButton">Mint NFT</button>
+            <div id="ownedLabel"></div>
+            <div id="mintsLeftLabel"></div> <!-- New label for available mints -->
+            <div id="status"></div>
+        </div>
     </div>
-
-
     <script>
 
         const contractAddress = "0xb741C2f06FA5b7aD042Eae5c78B3A3f13A40a8fA"; // contract address
