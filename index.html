@@ -296,19 +296,6 @@
 
         document.getElementById("mintButton").addEventListener("click", mintNFT);
 
-        // Show modal to get NFT ID
-        const modal = document.getElementById("modal");
-        const closeModal = document.getElementById("closeModal");
-
-        closeModal.onclick = function () {
-            modal.style.display = "none";
-        };
-
-        window.onclick = function (event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        };
 
         // Load ABI
         window.onload = async () => {
