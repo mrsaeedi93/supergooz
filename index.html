@@ -199,6 +199,7 @@
 
                 document.getElementById("status").style.color = "red";
                 document.getElementById("status").innerText = "Failed to load ABI";
+                return;
             }
 
             if (window.ethereum) {
@@ -214,23 +215,20 @@
                     document.getElementById("walletAddress").innerText = `Connected: ${address}`;
                     document.getElementById("connectButton").style.display = "none";
                     isWalletConnected = true;
-                }
-                /*
-                if (checkConnection()) {
-                    provider = null ?? new ethers.providers.Web3Provider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);
-                    signer = null ?? provider.getSigner();
-                    address = null ?? await signer.getAddress();
-                    network = null ?? await provider.getNetwork();
+                    try {
+                        const nftBalance = await getNFTBalance();
+                        document.getElementById("ownedLabel").innerText = `Owned NFTs: ${nftBalance}`;
+                    } catch (err) {
+                        document.getElementById("ownedLabel").innerText = "Error fetching owned mints";
+                    }
 
-                    document.getElementById("walletAddress").style.display = "inline";
-                    document.getElementById("walletAddress").innerText = `Connected: ${address}`;
-                    document.getElementById("connectButton").style.display = "none";
-                    document.getElementById("switchNetworkButton").style.display = network.chainId !== 84532 ? "inline" : "none";
-
+                    try {
+                        const mintsLeft = await getMintsLeft();
+                        document.getElementById("mintsLeftLabel").innerText = `Mints Left: ${mintsLeft}`;
+                    } catch (err) {
+                        document.getElementById("mintsLeftLabel").innerText = "Error fetching available mints";
+                    }
                 }
-                else console.log("checkConnection returned FALSE");
-                */
             }
             else console.log("window.ethereum returned FALSE");
 
@@ -268,7 +266,12 @@
         };
 
         async function getNFTBalance() {
-
+            if (!isWalletConnected) return 0; // Avoid calling contract methods if wallet is not connected
+            contract = new ethers.Contract(contractAddress, contractABI, signer);
+            balance = await contract.balanceOf(address); // For ERC-721, balanceOf(address) should work
+            return balance.toString(); // Return as string for consistency
+        }
+        /*
             if (isWalletConnected) {
                 const balance = await contract.balanceOf();
                 return balance;
@@ -284,23 +287,30 @@
             const balance = await contract.balanceOf(address);
             return balance;
         }
+            */
 
         async function getMintsLeft() {
-
-            if (isWalletConnected) {
-                const mintsLeft = await contract.mintsLeft();
-                return mintsLeft;
-            }
-
-            signer = signer || await connectToMetaMask();
-            if (!signer) {
-                console.log("func getMintsLeft returned FALSE signer");
-                return;
-            }
-            const contract = new ethers.Contract(contractAddress, contractABI, signer);
+            if (!isWalletConnected) return 0;
+            contract = new ethers.Contract(contractAddress, contractABI, signer);
+            const mintsLeft = await contract.mintsLeft();
+            return mintsLeft.toString(); // Return mints left as a string
+        }
+        /*
+        if (isWalletConnected) {
             const mintsLeft = await contract.mintsLeft();
             return mintsLeft;
         }
+
+        signer = signer || await connectToMetaMask();
+        if (!signer) {
+            console.log("func getMintsLeft returned FALSE signer");
+            return;
+        }
+        const contract = new ethers.Contract(contractAddress, contractABI, signer);
+        const mintsLeft = await contract.mintsLeft();
+        return mintsLeft;
+        }
+        */
 
 
         async function connectToMetaMask() {
