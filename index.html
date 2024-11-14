@@ -6,6 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ape Fools NFT Mint</title>
     <style>
+        @media screen and (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .leftPane,
+            .rightPane {
+                margin-bottom: 20px;
+            }
+        }
+
         /* Basic styling for gradients, responsive design, and buttons */
         button:disabled {
             border: 1px solid #999999 !important;
@@ -96,64 +107,6 @@
             color: yellow;
             font-size: 0.9em;
         }
-
-        /* Modal styling */
-        #modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
-        }
-
-        #modalContent {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 300px;
-            color: #000;
-            text-align: center;
-        }
-
-        #closeModal {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        #closeModal:hover,
-        #closeModal:focus {
-            color: black;
-        }
-
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #fff;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-left: 10px;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
     </style>
 
     <script src="ethers.umd.js" type="application/javascript"></script>
@@ -208,9 +161,14 @@
         const contractAddress = "0xb741C2f06FA5b7aD042Eae5c78B3A3f13A40a8fA"; // contract address
         let contractABI;
 
-        let provider, signer, address, network;
+        let provider, signer, address, network, collectionSize, totalSupply;
 
         let initialPageLoad = true;
+
+        let isWalletConnected = false;
+
+        const progressBar = document.getElementById("progressBar");
+        const progressText = document.getElementById("progressText");
 
         async function loadABI() {
             const response = await fetch('ABI.json');
@@ -232,15 +190,38 @@
                 return false;
         }
 
-
         async function loadData() {
+
+            try {
+                contractABI = contractABI || await loadABI();
+
+            } catch (error) {
+
+                document.getElementById("status").style.color = "red";
+                document.getElementById("status").innerText = "Failed to load ABI";
+            }
+
             if (window.ethereum) {
-                if (checkConnection()) {
-                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    address = accounts[0];
+                    provider = provider || new ethers.providers.Web3Provider(window.ethereum);
                     await provider.send("eth_requestAccounts", []);
-                    signer = provider.getSigner();
-                    address = await signer.getAddress();
-                    network = await provider.getNetwork();
+                    signer = signer || provider.getSigner();
+                    address = address || await signer.getAddress();
+                    network = network || await provider.getNetwork();
+                    document.getElementById("walletAddress").style.display = "inline";
+                    document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+                    document.getElementById("connectButton").style.display = "none";
+                    isWalletConnected = true;
+                }
+                /*
+                if (checkConnection()) {
+                    provider = null ?? new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    signer = null ?? provider.getSigner();
+                    address = null ?? await signer.getAddress();
+                    network = null ?? await provider.getNetwork();
 
                     document.getElementById("walletAddress").style.display = "inline";
                     document.getElementById("walletAddress").innerText = `Connected: ${address}`;
@@ -249,18 +230,12 @@
 
                 }
                 else console.log("checkConnection returned FALSE");
+                */
             }
             else console.log("window.ethereum returned FALSE");
 
 
-            try {
-                contractABI = await loadABI();
 
-            } catch (error) {
-
-                document.getElementById("status").style.color = "red";
-                document.getElementById("status").innerText = "Failed to load ABI";
-            }
 
             try {
                 if (checkConnection())
@@ -277,7 +252,6 @@
             }
         }
 
-
         // Load ABI
         window.onload = async () => {
             try {
@@ -293,10 +267,14 @@
             loadData();
         };
 
-
-
         async function getNFTBalance() {
-            signer = await connectToMetaMask();
+
+            if (isWalletConnected) {
+                const balance = await contract.balanceOf();
+                return balance;
+            }
+
+            signer = signer || await connectToMetaMask();
             if (!signer) {
                 console.log("func getNFTBalance returned FALSE signer");
                 return;
@@ -308,7 +286,13 @@
         }
 
         async function getMintsLeft() {
-            signer = await connectToMetaMask();
+
+            if (isWalletConnected) {
+                const mintsLeft = await contract.mintsLeft();
+                return mintsLeft;
+            }
+
+            signer = signer || await connectToMetaMask();
             if (!signer) {
                 console.log("func getMintsLeft returned FALSE signer");
                 return;
@@ -326,11 +310,26 @@
                     return;
                 }
 
-                // const provider = new ethers.providers.Web3Provider(window.ethereum);
+                try {
+                    if (!isWalletConnected) {
+                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        if (accounts.length > 0) {
+                            address = accounts[0];
+                            document.getElementById("walletAddress").style.display = "inline";
+                            document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+                            document.getElementById("connectButton").style.display = "none";
+                            isWalletConnected = true; // Update connection status
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error connecting wallet:", err);
+                }
+
+                provider = provider || new ethers.providers.Web3Provider(window.ethereum);
                 await provider.send("eth_requestAccounts", []);
-                signer = provider.getSigner();
-                address = await signer.getAddress();
-                network = await provider.getNetwork();
+                signer = signer || provider.getSigner();
+                address = address || await signer.getAddress();
+                network = network || await provider.getNetwork();
 
                 document.getElementById("walletAddress").style.display = "inline";
                 document.getElementById("walletAddress").innerText = `Connected: ${address}`;
@@ -367,6 +366,11 @@
         }
 
         document.getElementById("switchNetworkButton").addEventListener("click", async () => {
+            if (!window.ethereum) {
+                console.log("No installed wallet found");
+                document.getElementById("status").innerText = "Could not detect Ethereum wallet, Please install a wallet to continue";
+                return;
+            }
             try {
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
@@ -394,7 +398,6 @@
                 document.getElementById("status").innerText = "Mint amount must be a number between 1 and 5.";
                 return;  // Stop execution if validation fails
             }
-
 
             const contract = new ethers.Contract(contractAddress, contractABI, signer);
             const totalPrice = await contract.mintPrice(mintAmount);
@@ -451,21 +454,15 @@
                 return;
             }
 
-            if (contractABI == null)
-                contractABI = loadABI();
-
-            if (window.ethereum) {
+            if (window.ethereum && contractABI != null && provider != null) {
                 try {
                     // const provider = new ethers.providers.JsonRpcProvider("https://base-sepolia-rpc.publicnode.com"); // Read-only provider
                     const contract = new ethers.Contract(contractAddress, contractABI, provider); // Read-only contract instance
 
-                    const totalSupply = await contract.totalSupply(); // Number of minted tokens
-                    const collectionSize = await contract.collectionSize(); // Max supply
+                    totalSupply = await contract.totalSupply(); // Number of minted tokens
+                    collectionSize = await contract.collectionSize(); // Max supply
 
                     // Update the progress bar with the actual minted tokens out of max supply
-                    const progressBar = document.getElementById("progressBar");
-                    const progressText = document.getElementById("progressText");
-
                     progressBar.value = totalSupply;
                     progressBar.max = collectionSize;
                     progressText.innerText = `${totalSupply} / ${collectionSize} minted`;
@@ -477,8 +474,25 @@
         }
 
 
+        // Event listeners to detect wallet/account changes
+        window.ethereum.on('accountsChanged', async (accounts) => {
+            if (accounts.length > 0) {
+                address = accounts[0];
+                document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+                isWalletConnected = true;
+            } else {
+                document.getElementById("walletAddress").innerText = 'Not connected';
+                isWalletConnected = false;
+            }
+        });
 
-
+        window.ethereum.on('chainChanged', async (chainId) => {
+            if (parseInt(chainId, 16) !== 84532) {
+                document.getElementById("switchNetworkButton").style.display = "inline";
+            } else {
+                document.getElementById("switchNetworkButton").style.display = "none";
+            }
+        });
 
         // Update progress every 10 seconds
         setInterval(updateProgressBar, 10000);
