@@ -30,6 +30,18 @@
             text-align: center;
         }
 
+        /* Additional styling for the image inside #contents */
+        #contents img {
+            max-width: 80%;
+            /* Sets the image width to a maximum of 80% of the div width */
+            height: auto;
+            /* Maintains the image's aspect ratio */
+            display: block;
+            margin: 0 auto 1em;
+            /* Centers the image and adds some space below it */
+        }
+
+
         h1,
         h2,
         p {
@@ -151,7 +163,7 @@
 
     <div id="contents">
         <h1>Ape Fools</h1>
-        <img src="logo.png">
+        <img src="logo.png" alt="Logo">
         <h2>Mint your NFT on the Base Sepolia Testnet</h2>
         <div>
             <label for="progressBar">Mint Progress</label>
