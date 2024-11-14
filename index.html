@@ -178,7 +178,7 @@
         async function checkConnection() {
             if (window.ethereum) {
                 try {
-                    const acc = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const acc = await window.ethereum.request({ method: 'eth_accounts' });
                     if (acc.length) {
                         return true;
                     }
@@ -310,16 +310,17 @@
                     return;
                 }
 
+                // Prevent multiple requests if already connected
+                if (isWalletConnected) return;
+
                 try {
-                    if (!isWalletConnected) {
-                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                        if (accounts.length > 0) {
-                            address = accounts[0];
-                            document.getElementById("walletAddress").style.display = "inline";
-                            document.getElementById("walletAddress").innerText = `Connected: ${address}`;
-                            document.getElementById("connectButton").style.display = "none";
-                            isWalletConnected = true; // Update connection status
-                        }
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        address = accounts[0];
+                        document.getElementById("walletAddress").style.display = "inline";
+                        document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+                        document.getElementById("connectButton").style.display = "none";
+                        isWalletConnected = true; // Update connection status
                     }
                 } catch (err) {
                     console.error("Error connecting wallet:", err);
@@ -410,31 +411,23 @@
                 document.getElementById("status").style.color = "yellow";
                 document.getElementById("status").innerText = "Minting in progress...";
             } catch (err) {
+                const errorString = err.toString();
 
-                if (err.message != null && err.message.includes("denied")) {
-                    document.getElementById("status").style.color = "red";
-                    document.getElementById("status").innerText = "User denied transaction";
-                }
+                const errorMessages = {
+                    "Q": "Can't mint that many tokens",
+                    "SQ": "You can only mint 1 token for this price",
+                    "P": "The tokens you want to mint cost more than this"
+                };
 
-                else {
-                    const errorString = err.toString();
+                // Extract the reason from the error string
+                const match = errorString.match(/reason="execution reverted: (Q|SQ|P)"/);
+                const errorReason = match ? match[1] : "Unknown";
 
-                    const errorMessages = {
-                        "Q": "Can't mint that many tokens",
-                        "SQ": "You can only mint 1 token for this price",
-                        "P": "The tokens you want to mint cost more than this"
-                    };
+                // Get the corresponding message or use a default message
+                const errorMessage = errorMessages[errorReason] || "An unknown error occurred";
 
-                    // Extract the reason from the error string
-                    const match = errorString.match(/reason="execution reverted: (Q|SQ|P)"/);
-                    const errorReason = match ? match[1] : "Unknown";
-
-                    // Get the corresponding message or use a default message
-                    const errorMessage = errorMessages[errorReason] || "An unknown error occurred";
-
-                    document.getElementById("status").style.color = "red";
-                    document.getElementById("status").innerText = errorMessage;
-                }
+                document.getElementById("status").style.color = "red";
+                document.getElementById("status").innerText = errorMessage;
 
             }
 
