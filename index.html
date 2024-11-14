@@ -1,162 +1,369 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mint NFT with Ethers.js</title>
+    <title>Ape Fools NFT Mint</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        input, button { margin: 10px 0; padding: 8px; }
-        label { display: inline-block; width: 150px; }
-        .toggle-container { display: flex; justify-content: space-between; align-items: center; }
+        /* Basic styling for gradients, responsive design, and buttons */
+
+        button:disabled {
+            border: 1px solid #999999 !important;
+            background-color: #cccccc !important;
+            color: #666666 !important;
+            cursor: not-allowed !important;
+        }
+
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e56e3, #feb47b);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            text-align: center;
+        }
+
+        h1,
+        h2,
+        p {
+            margin: 0.5em 0;
+        }
+
+        #header {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        #connectButton,
+        #switchNetworkButton,
+        #mintButton,
+
+        #connectButton:hover,
+        #switchNetworkButton:hover,
+        #mintButton:hover {
+            background-color: #feb47b;
+        }
+
+
+        #contents {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        input[type="number"] {
+            width: 50px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 2px solid #feb47b;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        #status {
+            margin-top: 10px;
+            color: yellow;
+            font-size: 0.9em;
+        }
+
+        /* Modal styling */
+        #modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        #modalContent {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 300px;
+            color: #000;
+            text-align: center;
+        }
+
+        #closeModal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #closeModal:hover,
+        #closeModal:focus {
+            color: black;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+
+
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
     </style>
+
+    <script src="ethers.umd.js" type="application/javascript"></script>
 </head>
+
 <body>
-    <h1>Mint NFT</h1>
 
-    <!-- Form to input contract details and mint -->
-    <div>
-        <label for="contractAddress">Contract Address:</label>
-        <input type="text" id="contractAddress" placeholder="Enter contract address" required><br>
-
-        <label for="quantity">Quantity:</label>
-        <input type="number" id="quantity" value="10" required><br>
-
-        <div class="toggle-container">
-            <label for="gas">Gas Price:</label>
-            <input type="text" id="gas" disabled>
-            <button id="toggleGas">Toggle Manual Gas</button>
-        </div>
-
-        <div class="toggle-container">
-            <label for="signature">Signature:</label>
-            <input type="text" id="signature" disabled>
-            <button id="toggleSignature">Toggle Manual Signature</button>
-        </div>
-
-        <label for="timestamp">Timestamp:</label>
-        <input type="text" id="timestamp" disabled><br>
-
-        <label for="proof">Proof:</label>
-        <input type="text" id="proof" value=""><br>
-
-        <!-- Private Key input -->
-        <label for="privateKey">Private Key:</label>
-        <input type="text" id="privateKey" placeholder="Enter your private key" required><br>
-
-        <button id="connectButton">Connect with Private Key</button>
-        <button id="mintButton" style="display:none;">Mint NFT</button>
+    <div id="header">
+        <button id="connectButton">Connect Wallet</button>
+        <span id="walletAddress" style="display: none;"></span>
+        <button id="switchNetworkButton" style="display: none;">Switch to Base Sepolia</button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <div id="contents">
+        <h1>Ape Fools</h1>
+        <h2>Mint your NFT on the Base Sepolia Testnet</h2>
+        <p>First NFT mint for each wallet is <b><i>Free!</i></b></p>
+        <label for="mintAmount">Choose amount to mint (Max 5 per wallet):</label>
+        <input type="number" id="mintAmount" min="1" max="5" value="1">
+        <button id="mintButton">Mint NFT</button>
+        <div id="ownedLabel"></div>
+        <div id="mintsLeftLabel"></div> <!-- New label for available mints -->
+        <div id="status"></div>
+    </div>
+
 
     <script>
-        let provider, signer;
 
-        // Default gas price and signature toggle state
-        let gasPriceFetched = null;
-        let isGasManual = false;
-        let isSignatureManual = false;
+        const contractAddress = "0xb741C2f06FA5b7aD042Eae5c78B3A3f13A40a8fA"; // contract address
+        let contractABI;
 
-        // Connect using the private key from the input field
-        async function connectWithPrivateKey() {
-            const privateKey = document.getElementById('privateKey').value.trim();  // Get private key from input field
-            
-            if (privateKey) {
-                provider = new ethers.providers.Web3Provider(window.ethereum);  // Still using provider to interact with network
-                signer = new ethers.Wallet(privateKey, provider);  // Create signer with private key
 
-                const userAddress = await signer.getAddress();  // Get the address from the wallet
-                console.log("Connected with address:", userAddress);
-
-                document.getElementById('mintButton').style.display = "inline-block";
-                document.getElementById('connectButton').style.display = "none";
-                return userAddress;
-            } else {
-                alert("Please enter a private key!");
-            }
-        }
-
-        // Fetch current gas price
-        async function fetchGasPrice() {
-            gasPriceFetched = await provider.getGasPrice();
-            document.getElementById('gas').value = ethers.utils.formatUnits(gasPriceFetched, 'gwei') + ' gwei';
-        }
-
-        // Toggle gas input field
-        document.getElementById('toggleGas').addEventListener('click', () => {
-            isGasManual = !isGasManual;
-            document.getElementById('gas').disabled = !isGasManual;
-            if (!isGasManual && gasPriceFetched) {
-                document.getElementById('gas').value = ethers.utils.formatUnits(gasPriceFetched, 'gwei') + ' gwei';
-            }
-        });
-
-        // Toggle signature input field
-        document.getElementById('toggleSignature').addEventListener('click', async () => {
-            isSignatureManual = !isSignatureManual;
-            document.getElementById('signature').disabled = !isSignatureManual;
-            if (!isSignatureManual) {
-                document.getElementById('signature').value = await getSignatureFromExplorer();
-            }
-        });
-
-        // Fetch the signature from an explorer's API (stubbed)
-        async function getSignatureFromExplorer() {
-            // This is a placeholder for fetching the signature via an explorer API.
-            // You would replace this with an actual API request based on your project.
-            return "0x7596da158d2efe018724222f8c76a42405c6f9e93ab7eeff98e8982edf455b2f126a4dea6b9807335677abc7193b5b685167830c5e03f6fbe85537faf366ce7f1c";
-        }
-
-        // Mint NFT function
-        async function mintNFT() {
-            const contractAddress = document.getElementById('contractAddress').value;
-            const qty = parseInt(document.getElementById('quantity').value);
-            const proof = []; // Empty proof by default
-            const timestamp = Math.floor(Date.now() / 1000); // Current UNIX timestamp
-            const signature = isSignatureManual ? document.getElementById('signature').value : await getSignatureFromExplorer();
-            const gasPrice = isGasManual ? ethers.utils.parseUnits(document.getElementById('gas').value, 'gwei') : gasPriceFetched;
-
-            const contractABI = [
-                {
-                    "constant": false,
-                    "inputs": [
-                        { "name": "qty", "type": "uint32" },
-                        { "name": "proof", "type": "bytes32[]" },
-                        { "name": "timestamp", "type": "uint64" },
-                        { "name": "signature", "type": "bytes" }
-                    ],
-                    "name": "mint",
-                    "outputs": [{ "name": "", "type": "bool" }],
-                    "payable": false,
-                    "stateMutability": "nonpayable",
-                    "type": "function"
+        async function checkConnection() {
+            if (window.ethereum) {
+                try {
+                    const acc = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    if (acc.length)
+                        return true;
+                } catch (err) {
+                    console.log(err);
                 }
-            ];
+            }
+            else
+                return false;
+        }
 
+        async function getNFTBalance() {
+            const signer = await connectToMetaMask();
+            if (!signer) {
+                console.log("func getNFTBalance returned FALSE signer");
+                return;
+            }
             const contract = new ethers.Contract(contractAddress, contractABI, signer);
+            const address = await signer.getAddress();
+            const balance = await contract.balanceOf(address);
+            return balance;
+        }
+
+        async function getMintsLeft() {
+            const signer = await connectToMetaMask();
+            if (!signer) {
+                console.log("func getMintsLeft returned FALSE signer");
+                return;
+            }
+            const contract = new ethers.Contract(contractAddress, contractABI, signer);
+            const mintsLeft = await contract.mintsLeft();
+            return mintsLeft;
+        }
+
+
+        async function loadABI() {
+            const response = await fetch('ABI.json');
+            return await response.json();
+        }
+
+        async function connectToMetaMask() {
+            try {
+                if (!window.ethereum) {
+                    alert('Could not detect Ethereum wallet, Please install a wallet to continue.');
+                    return;
+                }
+
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                const signer = provider.getSigner();
+                const address = await signer.getAddress();
+                const network = await provider.getNetwork();
+
+                document.getElementById("walletAddress").style.display = "inline";
+                document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+                document.getElementById("connectButton").style.display = "none";
+                document.getElementById("switchNetworkButton").style.display = network.chainId !== 84532 ? "inline" : "none";
+
+                return signer;
+            } catch (err) {
+                console.error("User denied account access or other issue:", err);
+            }
+        }
+
+        document.getElementById("connectButton").addEventListener("click", connectToMetaMask);
+
+        async function addBaseSepoliaNetwork() {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [{
+                        chainId: '0x14a34', // Base Sepolia chainId in hexadecimal (84532)
+                        chainName: 'Base Sepolia',
+                        nativeCurrency: {
+                            name: 'ETH',
+                            symbol: 'ETH',
+                            decimals: 18
+                        },
+                        rpcUrls: ['https://base-sepolia-rpc.publicnode.com'], // You can replace this with the official RPC URL
+                        blockExplorerUrls: ['https://base-sepolia.blockscout.com/'] // Block explorer for Base Sepolia
+                    }]
+                });
+            } catch (err) {
+                console.error("Failed to add Base Sepolia network", err);
+            }
+        }
+
+        document.getElementById("switchNetworkButton").addEventListener("click", async () => {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: '0x14a34' }] // Base Sepolia chainId in hex
+                });
+            } catch (err) {
+                if (err.code === 4902) {
+                    console.log("Base Sepolia network not found. Attempting to add it.");
+                    await addBaseSepoliaNetwork();
+                } else {
+                    console.error("Failed to switch network", err);
+                }
+            }
+        });
+
+        async function mintNFT() {
+            const signer = await connectToMetaMask();
+            if (!signer) return;
+
+            const mintAmount = parseInt(document.getElementById("mintAmount").value);
+            const contract = new ethers.Contract(contractAddress, contractABI, signer);
+            const totalPrice = await contract.mintPrice(mintAmount);
+
+            const tx = await contract.mint(mintAmount, { value: totalPrice });
+            document.getElementById("mintButton").disabled = true;
+            document.getElementById("status").innerText = "Minting in progress...";
+
+            const receipt = await tx.wait();
+            document.getElementById("status").innerText = `Successfully minted ${mintAmount} NFTs! TxHash: ${receipt.transactionHash}`;
+            document.getElementById("mintButton").disabled = false;
+            document.getElementById("ownedLabel").innerText = "Owned NFTs: " + await getNFTBalance();
+            document.getElementById("mintsLeftLabel").innerText = "Mints Left: " + await getMintsLeft();
+        }
+
+        document.getElementById("mintButton").addEventListener("click", mintNFT);
+
+        // Show modal to get NFT ID
+        const modal = document.getElementById("modal");
+        const closeModal = document.getElementById("closeModal");
+
+        closeModal.onclick = function () {
+            modal.style.display = "none";
+        };
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+
+        // Load ABI
+        window.onload = async () => {
+            try {
+                if (!window.ethereum) {
+
+                    document.getElementById("status").innerText = "Could not detect Ethereum wallet, Please install a wallet to continue";
+                }
+            } catch (err) {
+                console.log("Failed to check Ethereum wallet");
+            }
+
+
+            if (window.ethereum) {
+                if (checkConnection()) {
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    const signer = provider.getSigner();
+                    const address = await signer.getAddress();
+                    const network = await provider.getNetwork();
+
+                    document.getElementById("walletAddress").style.display = "inline";
+                    document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+                    document.getElementById("connectButton").style.display = "none";
+                    document.getElementById("switchNetworkButton").style.display = network.chainId !== 84532 ? "inline" : "none";
+
+                }
+                else console.log("checkConnection returned FALSE");
+            }
+            else console.log("window.ethereum returned FALSE");
+
 
             try {
-                const tx = await contract.mint(qty, proof, timestamp, signature, {
-                    gasLimit: 200000,
-                    gasPrice: gasPrice
-                });
+                contractABI = await loadABI();
 
-                console.log("Transaction sent:", tx.hash);
-                await tx.wait(); // Wait for the transaction to be mined
-                console.log("Minted successfully!");
             } catch (error) {
-                console.error("Minting failed:", error);
+
+                document.getElementById("status").innerText = "Failed to load ABI";
             }
-        }
 
-        // Event listeners
-        document.getElementById('connectButton').addEventListener('click', async () => {
-            await connectWithPrivateKey();
-            await fetchGasPrice(); // Fetch the initial gas price after connection
-        });
+            try {
+                if (checkConnection())
+                    document.getElementById("ownedLabel").innerText = "Owned NFTs: " + await getNFTBalance();
+            } catch (err) {
+                document.getElementById("ownedLabel").innerText = "Error fetching owned mints";
+            }
 
-        document.getElementById('mintButton').addEventListener('click', mintNFT);
+            try {
+                if (checkConnection())
+                    document.getElementById("mintsLeftLabel").innerText = "Mints Left: " + await getMintsLeft();
+            } catch (err) {
+                document.getElementById("mintsLeftLabel").innerText = "Error fetching available mints";
+            }
+        };
     </script>
 </body>
+
 </html>
