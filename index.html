@@ -174,7 +174,9 @@
         let contractABI;
 
         let provider, signer, address, network;
-        
+
+        let initialPageLoad = true;
+
         async function checkConnection() {
             if (window.ethereum) {
                 try {
@@ -190,61 +192,61 @@
         }
 
 
-            // Load ABI
-            window.onload = async () => {
-                try {
-                    if (!window.ethereum) {
-
-                        document.getElementById("status").style.color = "red";
-                        document.getElementById("status").innerText = "Could not detect Ethereum wallet, Please install a wallet to continue";
-                    }
-                } catch (err) {
-                    console.log("Failed to check Ethereum wallet");
-                }
-
-
-                if (window.ethereum) {
-                    if (checkConnection()) {
-                        provider = new ethers.providers.Web3Provider(window.ethereum);
-                        await provider.send("eth_requestAccounts", []);
-                        signer = provider.getSigner();
-                        address = await signer.getAddress();
-                        network = await provider.getNetwork();
-
-                        document.getElementById("walletAddress").style.display = "inline";
-                        document.getElementById("walletAddress").innerText = `Connected: ${address}`;
-                        document.getElementById("connectButton").style.display = "none";
-                        document.getElementById("switchNetworkButton").style.display = network.chainId !== 84532 ? "inline" : "none";
-
-                    }
-                    else console.log("checkConnection returned FALSE");
-                }
-                else console.log("window.ethereum returned FALSE");
-
-
-                try {
-                    contractABI = await loadABI();
-
-                } catch (error) {
+        // Load ABI
+        window.onload = async () => {
+            try {
+                if (!window.ethereum) {
 
                     document.getElementById("status").style.color = "red";
-                    document.getElementById("status").innerText = "Failed to load ABI";
+                    document.getElementById("status").innerText = "Could not detect Ethereum wallet, Please install a wallet to continue";
                 }
+            } catch (err) {
+                console.log("Failed to check Ethereum wallet");
+            }
 
-                try {
-                    if (checkConnection())
-                        document.getElementById("ownedLabel").innerText = "Owned NFTs: " + await getNFTBalance();
-                } catch (err) {
-                    document.getElementById("ownedLabel").innerText = "Error fetching owned mints";
-                }
 
-                try {
-                    if (checkConnection())
-                        document.getElementById("mintsLeftLabel").innerText = "Mints Left: " + await getMintsLeft();
-                } catch (err) {
-                    document.getElementById("mintsLeftLabel").innerText = "Error fetching available mints";
+            if (window.ethereum) {
+                if (checkConnection()) {
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    signer = provider.getSigner();
+                    address = await signer.getAddress();
+                    network = await provider.getNetwork();
+
+                    document.getElementById("walletAddress").style.display = "inline";
+                    document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+                    document.getElementById("connectButton").style.display = "none";
+                    document.getElementById("switchNetworkButton").style.display = network.chainId !== 84532 ? "inline" : "none";
+
                 }
-            };
+                else console.log("checkConnection returned FALSE");
+            }
+            else console.log("window.ethereum returned FALSE");
+
+
+            try {
+                contractABI = await loadABI();
+
+            } catch (error) {
+
+                document.getElementById("status").style.color = "red";
+                document.getElementById("status").innerText = "Failed to load ABI";
+            }
+
+            try {
+                if (checkConnection())
+                    document.getElementById("ownedLabel").innerText = "Owned NFTs: " + await getNFTBalance();
+            } catch (err) {
+                document.getElementById("ownedLabel").innerText = "Error fetching owned mints";
+            }
+
+            try {
+                if (checkConnection())
+                    document.getElementById("mintsLeftLabel").innerText = "Mints Left: " + await getMintsLeft();
+            } catch (err) {
+                document.getElementById("mintsLeftLabel").innerText = "Error fetching available mints";
+            }
+        };
 
 
 
@@ -395,6 +397,11 @@
 
 
         async function updateProgressBar() {
+
+            if (initialPageLoad) {
+                initialPageLoad = false;
+                return;
+            }
 
             if (window.ethereum) {
                 try {
