@@ -287,10 +287,25 @@
             document.getElementById("mintButton").disabled = true;
             document.getElementById("status").innerText = "Minting in progress...";
             } catch (err) {
+                const errorString = err.toString();
                 console.log("Error MSG:", err.message);
-                // document.getElementById("status").style.color = 'red';
-                // document.getElementById("status").innerText = errorMessage;
-                // document.getElementById("status").style.color = 'yellow';
+
+                const errorMessages = {
+                "Q": "Can't mint that many tokens",
+                "SQ": "You can only mint 1 token for this price",
+                "P": "The tokens you want to mint cost more than this"
+                };
+
+                // Extract the reason from the error string
+                const match = errorString.match(/reason="execution reverted: (Q|SQ|P)"/);
+                const errorReason = match ? match[1] : "Unknown";
+
+                 // Get the corresponding message or use a default message
+                const errorMessage = errorMessages[errorReason] || "An unknown error occurred";
+
+                document.getElementById("status").style.color = 'red';
+                document.getElementById("status").innerText = errorMessage;
+                document.getElementById("status").style.color = 'yellow';
 
             }
 
