@@ -285,10 +285,10 @@
             try {
             const tx = await contract.mint(mintAmount, { value: totalPrice });
             document.getElementById("mintButton").disabled = true;
+            document.getElementById("status").style.color = "yellow";
             document.getElementById("status").innerText = "Minting in progress...";
             } catch (err) {
                 const errorString = err.toString();
-                console.log("Error MSG:", err.message);
 
                 const errorMessages = {
                 "Q": "Can't mint that many tokens",
@@ -303,13 +303,13 @@
                  // Get the corresponding message or use a default message
                 const errorMessage = errorMessages[errorReason] || "An unknown error occurred";
 
-                document.getElementById("status").style.color = 'red';
+                document.getElementById("status").style.color = "red";
                 document.getElementById("status").innerText = errorMessage;
-                document.getElementById("status").style.color = 'yellow';
 
             }
 
             const receipt = await tx.wait();
+            document.getElementById("status").style.color = "yellow";
             document.getElementById("status").innerText = `Successfully minted ${mintAmount} NFTs! TxHash: ${receipt.transactionHash}`;
             document.getElementById("mintButton").disabled = false;
             document.getElementById("ownedLabel").innerText = "Owned NFTs: " + await getNFTBalance();
@@ -324,6 +324,7 @@
             try {
                 if (!window.ethereum) {
 
+                    document.getElementById("status").style.color = "red";
                     document.getElementById("status").innerText = "Could not detect Ethereum wallet, Please install a wallet to continue";
                 }
             } catch (err) {
@@ -355,6 +356,7 @@
 
             } catch (error) {
 
+                document.getElementById("status").style.color = "red";
                 document.getElementById("status").innerText = "Failed to load ABI";
             }
 
