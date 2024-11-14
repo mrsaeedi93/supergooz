@@ -440,7 +440,7 @@
 
         async function updateProgressBar() {
 
-            if (checkConnection() && initialPageLoad) {
+            if (window.ethereum && initialPageLoad) {
                 initialPageLoad = false;
                 return;
             }
@@ -475,7 +475,7 @@
         setInterval(updateProgressBar, 10000);
 
         // Initial progress update on page load
-        updateProgressBar();
+        // updateProgressBar();
 
 
     </script>
