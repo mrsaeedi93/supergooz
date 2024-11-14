@@ -411,9 +411,9 @@
                 document.getElementById("status").innerText = "Minting in progress...";
             } catch (err) {
 
-                if (err.message != null) {
+                if (err.message != null && err.message.includes("denied")) {
                     document.getElementById("status").style.color = "red";
-                    document.getElementById("status").innerText = err.message[0];
+                    document.getElementById("status").innerText = "User denied transaction";
                 }
 
                 else {
