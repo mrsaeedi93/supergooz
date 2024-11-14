@@ -288,7 +288,7 @@
             document.getElementById("status").innerText = "Minting in progress...";
             } catch (err) {
                 document.getElementById("status").style.color = 'red';
-                document.getElementById("status").innerText = err;
+                document.getElementById("status").innerText = err.data.message;
                 document.getElementById("status").style.color = 'yellow';
 
             }
