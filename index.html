@@ -287,9 +287,7 @@
             document.getElementById("mintButton").disabled = true;
             document.getElementById("status").innerText = "Minting in progress...";
             } catch (err) {
-                console.log("Full Error:" , err);
-                console.log("Error Data:", err.data);
-                console.log("Error MSG inside data:" , err.data.message);
+                console.log("Error MSG:", err.message);
                 // document.getElementById("status").style.color = 'red';
                 // document.getElementById("status").innerText = errorMessage;
                 // document.getElementById("status").style.color = 'yellow';
