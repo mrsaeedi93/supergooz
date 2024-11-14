@@ -423,7 +423,7 @@
 
             let txHash = 'INVALID';
 
-            if (!tx) {
+            if (tx == null) {
                 const receipt = await tx.wait();
                 txHash = receipt.transactionHash;
             }
@@ -444,6 +444,9 @@
                 initialPageLoad = false;
                 return;
             }
+
+            if (contractABI == null)
+                contractABI = loadABI();
 
             if (window.ethereum) {
                 try {
@@ -475,7 +478,7 @@
         setInterval(updateProgressBar, 10000);
 
         // Initial progress update on page load
-        // updateProgressBar();
+        updateProgressBar();
 
 
     </script>
