@@ -6,301 +6,107 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ape Fools NFT Mint</title>
     <style>
-        /* Basic styling for gradients, responsive design, and buttons */
         button:disabled {
             border: 1px solid #999999 !important;
             background-color: #cccccc !important;
             color: #666666 !important;
             cursor: not-allowed !important;
         }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #1e56e3, #feb47b);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #fff;
-            text-align: center;
-        }
-
-        h1,
-        h2,
-        p {
-            margin: 0.5em 0;
-        }
-
-        #header {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-        }
-
-        #connectButton,
-        #switchNetworkButton,
-        #mintButton,
-        #connectButton:hover,
-        #switchNetworkButton:hover,
-        #mintButton:hover {
-            background-color: #feb47b;
-        }
-
-        #contents {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
-        }
-
-        input[type="number"] {
-            width: 50px;
-            padding: 5px;
-            border-radius: 5px;
-            border: 2px solid #feb47b;
-            font-size: 1.2em;
-            text-align: center;
-        }
-
-        #status {
-            margin-top: 10px;
-            color: yellow;
-            font-size: 0.9em;
-        }
-
-        /* Modal styling */
-        #modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
-        }
-
-        #modalContent {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 300px;
-            color: #000;
-            text-align: center;
-        }
-
-        #closeModal {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        #closeModal:hover,
-        #closeModal:focus {
-            color: black;
-        }
-
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #fff;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin-left: 10px;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
     </style>
-
     <script src="ethers.umd.js" type="application/javascript"></script>
 </head>
 
 <body>
-    <div id="header">
-        <button id="connectButton">Connect Wallet</button>
-        <span id="walletAddress" style="display: none;"></span>
-        <button id="switchNetworkButton" style="display: none;">Switch to Base Sepolia</button>
-    </div>
-
+    <button id="connectButton">Connect Wallet</button>
+    <button id="switchNetworkButton" style="display: none;">Switch to Base Sepolia</button>
+    <span id="walletAddress" style="display: none;"></span>
     <div id="contents">
         <h1>Ape Fools</h1>
         <h2>Mint your NFT on the Base Sepolia Testnet</h2>
         <p>First NFT mint for each wallet is <b><i>Free!</i></b></p>
-        <div>
-            <label for="progressBar">Mint Progress</label>
-            <progress id="progressBar" value="0" max="100"></progress>
-            <span id="progressText">0 / 2222 minted</span> <!-- Update this text dynamically -->
-        </div>
-
         <label for="mintAmount">Choose amount to mint</label>
         <input type="number" id="mintAmount" min="1" max="5" value="1">
         <button id="mintButton">Mint NFT</button>
-        <div id="ownedLabel"></div>
-        <div id="mintsLeftLabel"></div> <!-- New label for available mints -->
         <div id="status"></div>
     </div>
 
     <script>
-        // Declare global variables for frequently used DOM elements
+        // Define global variables for frequently used DOM elements and contract
         const connectButton = document.getElementById("connectButton");
         const switchNetworkButton = document.getElementById("switchNetworkButton");
-        const mintButton = document.getElementById("mintButton");
         const walletAddress = document.getElementById("walletAddress");
+        const mintAmount = document.getElementById("mintAmount");
+        const mintButton = document.getElementById("mintButton");
         const status = document.getElementById("status");
-        const mintAmountInput = document.getElementById("mintAmount");
-        const progressBar = document.getElementById("progressBar");
-        const progressText = document.getElementById("progressText");
 
-        const contractAddress = "0xb741C2f06FA5b7aD042Eae5c78B3A3f13A40a8fA"; // contract address
+        const contractAddress = "0xb741C2f06FA5b7aD042Eae5c78B3A3f13A40a8fA";
         let contract;
-        let contractABI;
 
-        // Global signer and contract initialization
-        async function loadContract() {
-            if (!window.ethereum) {
-                status.style.color = "red";
-                status.innerText = "Ethereum wallet not detected.";
-                return;
-            }
-
-            // Load contract ABI
-            try {
-                contractABI = await loadABI();
-            } catch (error) {
-                status.style.color = "red";
-                status.innerText = "Failed to load ABI";
-                return;
-            }
-
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            contract = new ethers.Contract(contractAddress, contractABI, signer);
-        }
-
-        // Helper function to load ABI from JSON file
-        async function loadABI() {
-            const response = await fetch('ABI.json');
-            return await response.json();
-        }
-
-        async function checkConnection() {
-            if (window.ethereum) {
-                try {
-                    const acc = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    if (acc.length) return true;
-                } catch (err) {
-                    console.log(err);
-                }
-            }
-            return false;
-        }
-
-        async function connectToMetaMask() {
-            try {
-                if (!window.ethereum) {
-                    alert('Could not detect Ethereum wallet, Please install a wallet to continue.');
-                    return;
-                }
-
+        async function connect() {
+            if (typeof window.ethereum !== "undefined") {
+                await ethereum.request({ method: "eth_requestAccounts" });
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
-                await provider.send("eth_requestAccounts", []);
                 const signer = provider.getSigner();
                 const address = await signer.getAddress();
-                const network = await provider.getNetwork();
-
+                walletAddress.innerHTML = "Connected: " + address;
                 walletAddress.style.display = "inline";
-                walletAddress.innerText = `Connected: ${address}`;
                 connectButton.style.display = "none";
-                switchNetworkButton.style.display = network.chainId !== 84532 ? "inline" : "none";
-
-                return signer;
-            } catch (err) {
-                console.error("User denied account access or other issue:", err);
+                const network = await provider.getNetwork();
+                if (network.chainId !== 84531) {
+                    switchNetworkButton.style.display = "inline";
+                }
+                contract = new ethers.Contract(contractAddress, contractABI, signer);
+            } else {
+                status.innerHTML = "Please install MetaMask";
             }
         }
 
-        connectButton.addEventListener("click", connectToMetaMask);
-
-        async function addBaseSepoliaNetwork() {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [{
-                        chainId: '0x14a34', // Base Sepolia chainId in hexadecimal (84532)
-                        chainName: 'Base Sepolia',
-                        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                        rpcUrls: ['https://base-sepolia-rpc.publicnode.com'], // You can replace this with the official RPC URL
-                        blockExplorerUrls: ['https://base-sepolia.blockscout.com/'] // Block explorer for Base Sepolia
-                    }]
-                });
-            } catch (err) {
-                console.error("Failed to add Base Sepolia network", err);
-            }
-        }
-
-        switchNetworkButton.addEventListener("click", async () => {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: '0x14a34' }] // Base Sepolia chainId in hex
-                });
-            } catch (err) {
-                if (err.code === 4902) {
-                    console.log("Base Sepolia network not found. Attempting to add it.");
-                    await addBaseSepoliaNetwork();
-                } else {
-                    console.error("Failed to switch network", err);
+        async function switchNetwork() {
+            if (typeof window.ethereum !== "undefined") {
+                try {
+                    await ethereum.request({
+                        method: "wallet_switchEthereumChain",
+                        params: [{ chainId: "0x14A3B" }],
+                    });
+                } catch (error) {
+                    if (error.code === 4902) {
+                        await ethereum.request({
+                            method: "wallet_addEthereumChain",
+                            params: [
+                                {
+                                    chainId: "0x14A3B",
+                                    rpcUrls: ["https://sepolia.base.org"],
+                                    chainName: "Base Sepolia",
+                                    nativeCurrency: { name: "Sepolia ETH", symbol: "ETH", decimals: 18 },
+                                    blockExplorerUrls: ["https://sepolia.etherscan.io"],
+                                },
+                            ],
+                        });
+                    }
                 }
             }
-        });
+        }
 
-        async function mintNFT() {
-            const signer = await connectToMetaMask();
-            if (!signer || !contract) return;
-
-            const mintAmount = parseInt(mintAmountInput.value);
-
-            if (mintAmount < 1 || mintAmount > 5) {
-                status.innerText = "Mint amount must be between 1 and 5.";
-                return;
-            }
-
-            try {
-                mintButton.disabled = true;
-                status.innerText = "Minting in progress...";
-                const transaction = await contract.mint(signer.getAddress(), mintAmount);
-                await transaction.wait();
-                status.innerText = `Minted ${mintAmount} NFTs successfully!`;
-                mintButton.disabled = false;
-            } catch (err) {
-                console.error("Minting error", err);
-                status.innerText = "Error while minting, please try again.";
-                mintButton.disabled = false;
+        async function mint() {
+            const mintAmountValue = mintAmount.value;
+            if (contract) {
+                try {
+                    const response = await contract.mint(mintAmountValue, {
+                        value: ethers.utils.parseEther("0.001"),
+                    });
+                    await response.wait();
+                    status.innerHTML = "Minted!";
+                } catch (error) {
+                    status.innerHTML = "Error: " + error.message;
+                }
+            } else {
+                status.innerHTML = "Please connect wallet first.";
             }
         }
 
-        mintButton.addEventListener("click", mintNFT);
-
-        loadContract();
+        connectButton.onclick = connect;
+        switchNetworkButton.onclick = switchNetwork;
+        mintButton.onclick = mint;
     </script>
 </body>
 
