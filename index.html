@@ -212,12 +212,18 @@
 
         let initialPageLoad = true;
 
+        async function loadABI() {
+            const response = await fetch('ABI.json');
+            return await response.json();
+        }
+
         async function checkConnection() {
             if (window.ethereum) {
                 try {
                     const acc = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    if (acc.length)
+                    if (acc.length) {
                         return true;
+                    }
                 } catch (err) {
                     console.log(err);
                 }
@@ -227,19 +233,7 @@
         }
 
 
-        // Load ABI
-        window.onload = async () => {
-            try {
-                if (!window.ethereum) {
-
-                    document.getElementById("status").style.color = "red";
-                    document.getElementById("status").innerText = "Could not detect Ethereum wallet, Please install a wallet to continue";
-                }
-            } catch (err) {
-                console.log("Failed to check Ethereum wallet");
-            }
-
-
+        async function loadData() {
             if (window.ethereum) {
                 if (checkConnection()) {
                     provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -281,6 +275,22 @@
             } catch (err) {
                 document.getElementById("mintsLeftLabel").innerText = "Error fetching available mints";
             }
+        }
+
+
+        // Load ABI
+        window.onload = async () => {
+            try {
+                if (!window.ethereum) {
+
+                    document.getElementById("status").style.color = "red";
+                    document.getElementById("status").innerText = "Could not detect Ethereum wallet, Please install a wallet to continue";
+                }
+            } catch (err) {
+                console.log("Failed to check Ethereum wallet");
+            }
+
+            loadData();
         };
 
 
@@ -308,10 +318,6 @@
             return mintsLeft;
         }
 
-        async function loadABI() {
-            const response = await fetch('ABI.json');
-            return await response.json();
-        }
 
         async function connectToMetaMask() {
             try {
