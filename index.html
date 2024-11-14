@@ -440,7 +440,7 @@
 
         async function updateProgressBar() {
 
-            if (initialPageLoad) {
+            if (window.ethereum && initialPageLoad) {
                 initialPageLoad = false;
                 return;
             }
