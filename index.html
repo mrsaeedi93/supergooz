@@ -428,6 +428,7 @@
                 });
             } catch (err) {
                 console.error("Failed to add Base Sepolia network", err);
+                console.warn("Error Code: ", err.code);
             }
         }
 
