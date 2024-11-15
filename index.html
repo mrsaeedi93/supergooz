@@ -428,7 +428,10 @@
                 });
             } catch (err) {
                 console.error("Failed to add Base Sepolia network", err);
-                console.warn("Error Code: ", err.code);
+                if (err.code == 4200) {
+                    document.getElementById("status").style.color = 'red';
+                    document.getElementById("status").innerText = "Wallet/Provider does not support requested method.";
+                }
             }
         }
 
