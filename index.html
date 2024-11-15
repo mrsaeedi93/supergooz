@@ -321,7 +321,7 @@
                 }
 
                 // Prevent multiple requests if already connected
-                if (isWalletConnected) return;
+                if (isWalletConnected) return signer;
 
                 try {
                     const accounts = await window.ethereum.request({ method: 'eth_accounts' });
@@ -398,8 +398,16 @@
         });
 
         async function mintNFT() {
-            signer = await connectToMetaMask();
-            if (!signer) return;
+            // Ensure the user is connected and we have a valid signer
+            if (!signer) {
+                // If no signer, ask the user to connect
+                signer = await connectToMetaMask();
+                if (!signer) {
+                    document.getElementById("status").style.color = "red";
+                    document.getElementById("status").innerText = "Please connect your wallet to mint.";
+                    return;
+                }
+            }
 
             const mintAmount = parseInt(document.getElementById("mintAmount").value);
 
