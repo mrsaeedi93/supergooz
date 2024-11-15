@@ -405,6 +405,10 @@
                 return signer;
             } catch (err) {
                 console.error("User denied account access or other issue:", err);
+                if (err.code == 4001) {
+                    document.getElementById("status").style.color = 'red';
+                    document.getElementById("status").innerText = "User rejected the request";
+                }
             }
         }
 
