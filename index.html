@@ -449,15 +449,10 @@
 
             }
 
-            let txHash = 'INVALID';
-
-            if (tx == null) {
-                const receipt = await tx.wait();
-                txHash = receipt.transactionHash;
-            }
+            const receipt = await tx.wait();
 
             document.getElementById("status").style.color = "yellow";
-            document.getElementById("status").innerText = `Successfully minted ${mintAmount} NFTs! TxHash: ${txHash}`;
+            document.getElementById("status").innerText = `Successfully minted ${mintAmount} NFTs! TxHash: ${receipt.transactionHash}`;
             document.getElementById("mintButton").disabled = false;
             document.getElementById("ownedLabel").innerText = "Owned NFTs: " + await getNFTBalance();
             document.getElementById("mintsLeftLabel").innerText = "Mints Left: " + await getMintsLeft();
